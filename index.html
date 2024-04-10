@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>"weather" ha</title>
+        <link rel="stylesheet" href="font.css">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <sunny></sunny>
+        <rainy></rainy>
+        <thesun></thesun>
+        <grass></grass>
+        <div id="main">
+            <div id="content">
+                <p id="date"></p>
+                <h1 id="current"></h1><br><br>
+                <p id="detailed"></p><br>
+                <button id="load" onclick="getLocation()">Load</button>
+            </div>
+
+            <div class="rain front-row"></div>
+            <div class="rain back-row"></div>
+        </div>
+
+        <div id="credits">
+            <a class="mailto" href="mailto:neilpatrao@duck.com">Made by Neil Patrao</a>
+            <a class="weathergov" href="https://www.weather.gov/documentation/services-web-api">Data provided by Weather.gov</a>
+        </div>
+        <!--scripts-->
+        <script src="script.js"></script>
+    </body>
+</html>
