@@ -14,7 +14,7 @@ function getLocation(){
         fetchingFeedback = setInterval(() => {
             secondsSinceFetch+=10;
             $('current').innerHTML=`Fetching... (${secondsSinceFetch}ms elapsed)`
-        }, 1);
+        }, 2);
         if (navigator.geolocation){
             console.log('Requesting Geolocation API at '+secondsSinceFetch+'ms')
             navigator.geolocation.getCurrentPosition(setup, fail)
@@ -27,6 +27,8 @@ function getLocation(){
         $('current').innerHTML="Errored at "+secondsSinceFetch+"ms"
     }
 }
+let name;
+let detailed;
 function setup(position){
     console.log('Received permission at '+secondsSinceFetch+'ms')
     let latitude = position.coords.latitude.toFixed(4)
@@ -35,7 +37,11 @@ function setup(position){
     //let url=`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,rain,showers,snowfall,precipitation&temperature_unit=fahrenheit&precipitation_unit=inch`
     console.log('Fetching at '+secondsSinceFetch+'ms')
     fetch(`https://api.weather.gov/points/${latitude},${longitude}`).then(data=>data.json()).then(data=>{
-        url=data.properties.forecast
+        url=data.properties.forecastHourly
+        fetch(data.properties.forecast).then(data=>data.json()).then(data=>{
+            name=data.properties.periods[0].name;
+            detailed=data.properties.periods[0].detailedForecast;
+        })
     }).then(()=>fetch(url).then(data=>data.json()).then(data=>{
         console.log('Received data at '+secondsSinceFetch+'ms')
         secondsSinceFetch=0;
@@ -48,14 +54,15 @@ function fail(error){
     console.error(error)
 }
 function setUI(periods){
-    $('date').innerHTML=`${periods.name} will be`
+    $('date').innerHTML=`${name} will be`
     $('current').innerHTML=`${periods.temperature}° ${periods.temperatureUnit}`
-    $('detailed').innerHTML=`${periods.detailedForecast}`
+    $('detailed').innerHTML=`${detailed}`
     
     //setting stuff like the sun
-    if (periods.name=="Tonight"){
+    if (name=="Tonight"){
         document.querySelector('thesun').classList.add('themoon')
         document.querySelector('grass').classList.add('themoon')
+        document.querySelector('hill').classList.add('themoon')
         document.querySelector('sunny').animate({
             opacity: 0
         }, {duration: 750, easing: 'ease', fill: 'forwards'})
@@ -64,6 +71,10 @@ function setUI(periods){
 getLocation()
 
 function makeItRain() {
+    document.querySelector('grass').classList.add('rainy')
+    document.querySelector('hill').classList.add('rainy')
+    document.querySelector('.mailto').classList.add('rainy')
+    document.querySelector('.weathergov').classList.add('rainy')
     //clear out everything
     $('.rain').innerHTML="";
     
