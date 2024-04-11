@@ -1,4 +1,3 @@
-
 function $(e){
     if (e.startsWith('.')){
         return document.querySelector(e)
@@ -6,17 +5,21 @@ function $(e){
     return document.getElementById(e)
 }
 
+
 let fetchingFeedback;
 let secondsSinceFetch=0;
 function getLocation(){
     try{
-        $('current').innerHTML="Fetching (0ms elapsed)"
+        $('current').innerHTML="Fetching (0s elapsed)"
         fetchingFeedback = setInterval(() => {
-            secondsSinceFetch+=10;
-            $('current').innerHTML=`Fetching... (${secondsSinceFetch}ms elapsed)`
-        }, 2);
+            secondsSinceFetch+=1;
+            $('current').innerHTML=`Fetching... (${secondsSinceFetch}s elapsed)`
+            if (secondsSinceFetch==5){
+                navigator.geolocation.watchPosition(setup, fail)
+            }
+        }, 1000);
         if (navigator.geolocation){
-            console.log('Requesting Geolocation API at '+secondsSinceFetch+'ms')
+            console.log('Requesting Geolocation API at '+secondsSinceFetch+'s')
             navigator.geolocation.getCurrentPosition(setup, fail)
         } else{
             $('current').innerHTML="Your browser doesn\'t support the Geolocation API. Found at "+secondsSinceFetch+"ms"
@@ -24,53 +27,89 @@ function getLocation(){
     } catch(e){
         console.error(e)
         clearInterval(fetchingFeedback)
-        $('current').innerHTML="Errored at "+secondsSinceFetch+"ms"
+        $('current').innerHTML="Errored at "+secondsSinceFetch+"s"
     }
 }
-let name;
 let detailed;
+let forecast;
 function setup(position){
-    console.log('Received permission at '+secondsSinceFetch+'ms')
+    localStorage.setItem('visitedBefore',"true")
+    console.log('Received permission at '+secondsSinceFetch+'s')
     let latitude = position.coords.latitude.toFixed(4)
     let longitude = position.coords.longitude.toFixed(4)
+    localStorage.setItem('latitude', latitude)
+    localStorage.setItem('longitude', longitude)
     let url;
     //let url=`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,rain,showers,snowfall,precipitation&temperature_unit=fahrenheit&precipitation_unit=inch`
-    console.log('Fetching at '+secondsSinceFetch+'ms')
-    fetch(`https://api.weather.gov/points/${latitude},${longitude}`).then(data=>data.json()).then(data=>{
+    console.log('Fetching at '+secondsSinceFetch+'s')
+    request=fetch(`https://api.weather.gov/points/${latitude},${longitude}`).then(data=>data.json()).then(data=>{
         url=data.properties.forecastHourly
-        fetch(data.properties.forecast).then(data=>data.json()).then(data=>{
-            name=data.properties.periods[0].name;
-            detailed=data.properties.periods[0].detailedForecast;
-        })
-    }).then(()=>fetch(url).then(data=>data.json()).then(data=>{
-        console.log('Received data at '+secondsSinceFetch+'ms')
+        forecast=data.properties.forecast
+    }).then(()=>fetch(forecast).then(data=>data.json()).then(data=>{
+        detailed=data.properties.periods[0].detailedForecast;
+    })).then(()=>fetch(url).then(data=>data.json()).then(data=>{
+        console.log('Received data at '+secondsSinceFetch+'s')
         secondsSinceFetch=0;
         clearInterval(fetchingFeedback)
         console.log(data.properties.periods)
-        setUI(data.properties.periods[0])
+        setUI(data.properties.periods)
     }))
 }
 function fail(error){
     console.error(error)
 }
 function setUI(periods){
-    $('date').innerHTML=`${name} will be`
-    $('current').innerHTML=`${periods.temperature}° ${periods.temperatureUnit}`
-    $('detailed').innerHTML=`${detailed}`
+    $('date').innerHTML=`It is currently`
+    console.log(periods[0])
+    $('current').innerHTML=`${periods[0].temperature}° ${periods[0].temperatureUnit} and ${periods[0].shortForecast}`
+    let sunSet;
+    for (let i=0;i<periods.length;i++){
+        if (periods[i].isDaytime==false){
+            sunSet=periods[i].startTime;
+            $('detailed').innerHTML=`<ul><li>${detailed}</li><br><li>Wind Speed: ${periods[0].windSpeed} ${periods[0].windDirection}</li><br><li>Sun set at about ${sunSet.split('T')[1].split('-')[0]}</li></ul>`
+            return;
+        }
+    }
     
     //setting stuff like the sun
     if (name=="Tonight"){
-        document.querySelector('thesun').classList.add('themoon')
-        document.querySelector('grass').classList.add('themoon')
-        document.querySelector('hill').classList.add('themoon')
-        document.querySelector('sunny').animate({
-            opacity: 0
-        }, {duration: 750, easing: 'ease', fill: 'forwards'})
+        makeItDark()
     }
 }
-getLocation()
+
+if (localStorage.getItem('visitedBefore')=="true"){
+    getLocation()
+} else{
+    $('date').innerHTML="Your browser requires user input before we can load.<br>Click the button below"
+}
+
+function makeItSunny(){
+    document.querySelector('thesun').classList.remove('themoon')
+    document.querySelector('grass').classList.remove('themoon')
+    document.querySelector('hill').classList.remove('themoon')
+    document.querySelector('grass').classList.remove('rainy')
+    document.querySelector('hill').classList.remove('rainy')
+    document.querySelector('sunny').animate({
+        opacity: 1
+    }, {duration: 750, easing: 'ease', fill: 'forwards'})
+    $('.rain.front-row').innerHTML=""
+    $('.rain.back-row').innerHTML=""
+}
+
+function makeItDark(){
+    document.querySelector('thesun').classList.add('themoon')
+    document.querySelector('grass').classList.add('themoon')
+    document.querySelector('hill').classList.add('themoon')
+    document.querySelector('sunny').animate({
+        opacity: 0
+    }, {duration: 750, easing: 'ease', fill: 'forwards'})
+}
 
 function makeItRain() {
+    document.querySelector('sunny').animate({
+        opacity: 0
+    }, {duration: 750, easing: 'ease', fill: 'forwards'})
+    document.querySelector('thesun').classList.add('themoon')
     document.querySelector('grass').classList.add('rainy')
     document.querySelector('hill').classList.add('rainy')
     document.querySelector('.mailto').classList.add('rainy')
@@ -79,9 +118,10 @@ function makeItRain() {
     $('.rain').innerHTML="";
     
     var increment = 0;
-    var drops = "";
-    var backDrops = "";
     
+    var drops=""
+    var backDrops=""
+
     while (increment < 100) {
         //couple random numbers to use for various randomizations
         //random number between 98 and 1
