@@ -67,13 +67,11 @@ function setUI(periods){
         if (periods[i].isDaytime==false){
             sunSet=periods[i].startTime;
             $('detailed').innerHTML=`<ul><li>${detailed}</li><br><li>Wind Speed: ${periods[0].windSpeed} ${periods[0].windDirection}</li><br><li>Sun set at about ${sunSet.split('T')[1].split('-')[0]}</li></ul>`
+            if (i==0){
+                makeItDark()
+            }
             return;
         }
-    }
-    
-    //setting stuff like the sun
-    if (name=="Tonight"){
-        makeItDark()
     }
 }
 
@@ -118,7 +116,7 @@ function makeItRain() {
     $('.rain').innerHTML="";
     
     var increment = 0;
-    
+
     var drops=""
     var backDrops=""
 
