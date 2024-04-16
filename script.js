@@ -63,7 +63,7 @@ function setUI(periods){
     $('date').innerHTML=`It is currently`
     console.log(periods[0])
     $('current').innerHTML=`${periods[0].temperature}° ${periods[0].temperatureUnit} and ${periods[0].shortForecast}`
-    if (periods[0].shortForecast.match('shower')||periods[0].shortForecast.match('shower')){
+    if (periods[0].shortForecast.toLowerCase().match('shower')||periods[0].shortForecast.toLowerCase().match('thunderstorm')){
         makeItRain()
         raining=true;
     }
