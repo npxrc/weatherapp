@@ -58,16 +58,21 @@ function setup(position){
 function fail(error){
     console.error(error)
 }
+let raining=false;
 function setUI(periods){
     $('date').innerHTML=`It is currently`
     console.log(periods[0])
     $('current').innerHTML=`${periods[0].temperature}° ${periods[0].temperatureUnit} and ${periods[0].shortForecast}`
+    if (periods[0].shortForecast.match('shower')||periods[0].shortForecast.match('shower')){
+        makeItRain()
+        raining=true;
+    }
     let sunSet;
     for (let i=0;i<periods.length;i++){
         if (periods[i].isDaytime==false){
             sunSet=periods[i].startTime;
             $('detailed').innerHTML=`<ul><li>${detailed}</li><br><li>Wind Speed: ${periods[0].windSpeed} ${periods[0].windDirection}</li><br><li>Sun sets by about ${sunSet.split('T')[1].split('-')[0]}</li></ul>`
-            if (i==0){
+            if (i==0 && !raining){
                 makeItDark()
             }
             return;
