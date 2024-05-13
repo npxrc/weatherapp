@@ -15,7 +15,15 @@ function getLocation(){
             secondsSinceFetch+=1;
             $('current').innerHTML=`Fetching... (${secondsSinceFetch}s elapsed)`
             if (secondsSinceFetch==5){
-                navigator.geolocation.watchPosition(setup, fail)
+                if (localStorage.getItem('latitude') && localStorage.getItem('longitude')){
+                    setup({
+                        coords:{
+                            latitude: parseFloat(localStorage.getItem('latitude')),
+                            longitude: parseFloat(localStorage.getItem('longitude'))
+                        }
+                    }, true)
+                }
+                clearInterval(fetchingFeedback);
             }
         }, 1000);
         if (navigator.geolocation){
@@ -32,7 +40,7 @@ function getLocation(){
 }
 let detailed;
 let forecast;
-function setup(position){
+function setup(position, fake){
     localStorage.setItem('visitedBefore',"true")
     console.log('Received permission at '+secondsSinceFetch+'s')
     let latitude = position.coords.latitude.toFixed(4)
@@ -52,14 +60,18 @@ function setup(position){
         secondsSinceFetch=0;
         clearInterval(fetchingFeedback)
         console.log(data.properties.periods)
-        setUI(data.properties.periods)
+        setUI(data.properties.periods, fake)
     }))
 }
 function fail(error){
     console.error(error)
 }
-function setUI(periods){
-    $('date').innerHTML=`It is currently`
+function setUI(periods, fake){
+    if (fake){
+        $('date').innerHTML=`Couldn't retrieve your location in less than 5 seconds, using your previous coordinates.<br>Still fetching your location in the background.<br>It is currently`
+    } else{
+        $('date').innerHTML=`It is currently`
+    }
     console.log(periods[0])
     $('current').innerHTML=`${periods[0].temperature}° ${periods[0].temperatureUnit} and ${periods[0].shortForecast}`
     let sunSet;
