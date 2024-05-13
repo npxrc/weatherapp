@@ -66,20 +66,26 @@ function setup(position, fake){
 function fail(error){
     console.error(error)
 }
+let raining=false;
 function setUI(periods, fake){
     if (fake){
         $('date').innerHTML=`Couldn't retrieve your location in less than 5 seconds, using your previous coordinates.<br>Still fetching your location in the background.<br>It is currently`
     } else{
         $('date').innerHTML=`It is currently`
     }
+    $('date').innerHTML=`It is currently`
     console.log(periods[0])
     $('current').innerHTML=`${periods[0].temperature}° ${periods[0].temperatureUnit} and ${periods[0].shortForecast}`
+    if (periods[0].shortForecast.toLowerCase().match('shower')||periods[0].shortForecast.toLowerCase().match('thunderstorm')){
+        makeItRain()
+        raining=true;
+    }
     let sunSet;
     for (let i=0;i<periods.length;i++){
         if (periods[i].isDaytime==false){
             sunSet=periods[i].startTime;
             $('detailed').innerHTML=`<ul><li>${detailed}</li><br><li>Wind Speed: ${periods[0].windSpeed} ${periods[0].windDirection}</li><br><li>Sun sets by about ${sunSet.split('T')[1].split('-')[0]}</li></ul>`
-            if (i==0){
+            if (i==0 && !raining){
                 makeItDark()
             }
             return;
